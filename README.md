@@ -4,7 +4,7 @@ Spectroscopic Single Molecule Localization Microscopy (sSMLM) is a method to mea
 <!-- The protocol is described in detail in the following publication: -->
 
 # Prerequisites
-The accompanying software, `RainbowSTORM v2` requires at least MATLAB R2020b to run, and requires the following toolboxes due to the following functions:
+The accompanying software, `RainbowSTORM v2` requires at least MATLAB R2020b to run, and requires the following toolboxes:
 - Curve Fitting Toolbox
 - Statistics and Machine Learning Toolbox
 - Text Analytics Toolbox
