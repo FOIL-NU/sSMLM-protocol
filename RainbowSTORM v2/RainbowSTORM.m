@@ -61,7 +61,7 @@ classdef RainbowSTORM < matlab.apps.AppBase
         order0_crops = zeros(1,4);  % cropping parameters for the 0th order
         order1_crops = zeros(1,4);  % cropping parameters for the 1st order
 
-        processing_central_wavelength % central wavelength for processing
+        processing_central_wavelength = nan; % central wavelength for processing
         processing_cancelled = false; 
         processing_complete = false;
 
@@ -471,17 +471,18 @@ classdef RainbowSTORM < matlab.apps.AppBase
             app.StatusLabel.Text = 'Reading calibration files...';
             drawnow;
             loaded_speccali = load(app.dir_speccali, 'speccali');
-            
-            [~, idx] = min(abs(loaded_speccali.wavelengths - central_wavelength));
+            loaded_speccali = loaded_speccali.speccali;
 
-            if all(isnan(order0_roi)) || all(isnan(order1_roi))
-                mid_x0 = (min(ts_table0{:, 'x [nm]'}) + max(ts_table0{:, 'x [nm]'})) / 2;
-                mid_y0 = (min(ts_table0{:, 'y [nm]'}) + max(ts_table0{:, 'y [nm]'})) / 2;
-                xoff = 0;
-            else
+            [~, idx] = min(abs(loaded_speccali.wavelengths - app.CentralWavelengthSlider.Value));
+
+            if app.order0_crops_set && app.order1_crops_set
                 mid_x0 = (order0_roi(1) + (order0_roi(3)) / 2) * img_pxsz;
                 mid_y0 = (order0_roi(2) + (order0_roi(4)) / 2) * img_pxsz;
                 xoff = (order1_roi(1) - order0_roi(1)) * img_pxsz;
+            else
+                mid_x0 = (min(ts_table0{:, 'x [nm]'}) + max(ts_table0{:, 'x [nm]'})) / 2;
+                mid_y0 = (min(ts_table0{:, 'y [nm]'}) + max(ts_table0{:, 'y [nm]'})) / 2;
+                xoff = 0;
             end
 
             ts_table0{:, 'x [nm]'} = (ts_table0{:, 'x [nm]'} - mid_x0) .* loaded_speccali.xscale(idx) + mid_x0;
@@ -726,13 +727,13 @@ classdef RainbowSTORM < matlab.apps.AppBase
             % perform a low pass filter on the cross correlation image
             corr_im = imgaussfilt(corr_im, 5);
 
-            figure(2);
-            subplot(1,3,1);
-            imshow(im0,[]);
-            subplot(1,3,2);
-            imshow(im1,[]);
-            subplot(1,3,3);
-            imshow(corr_im,[]);
+            % figure(2);
+            % subplot(1,3,1);
+            % imshow(im0,[]);
+            % subplot(1,3,2);
+            % imshow(im1,[]);
+            % subplot(1,3,3);
+            % imshow(corr_im,[]);
             
             [ypeak, xpeak] = find(corr_im == max(corr_im(:)));
             xcomp = -(xpeak-size(im0,2))*sample_px;
