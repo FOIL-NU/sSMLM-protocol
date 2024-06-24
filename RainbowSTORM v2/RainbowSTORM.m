@@ -332,7 +332,7 @@ classdef RainbowSTORM < matlab.apps.AppBase
                     return;
                 end
                 file_contents = whos('-file', app.dir_axialcali);
-                if ~any(strcmp({file_contents.name}, 'cali_array'))
+                if ~any(strcmp({file_contents.name}, 'zcali'))
                     app.StatusLabel.Text = 'The axial calibration file is not valid.';
                     app.StatusLabel.FontColor = 'red';
                     errordlg('The axial calibration file is not valid.');
@@ -347,13 +347,13 @@ classdef RainbowSTORM < matlab.apps.AppBase
                 return;
             end
 
-            if app.order0_crops_set && app.order1_crops_set
-                app.enable_settings_panel = true;
-            elseif ~(~app.order0_crops_set && ~app.order1_crops_set)
-                app.StatusLabel.Text = 'Please set the cropping regions for both orders.';
-                app.StatusLabel.FontColor = 'black';
-                return;
-            end
+            % if app.order0_crops_set && app.order1_crops_set
+            %     app.enable_settings_panel = true;
+            % elseif ~(~app.order0_crops_set && ~app.order1_crops_set)
+            %     app.StatusLabel.Text = 'Please set the cropping regions for both orders.';
+            %     app.StatusLabel.FontColor = 'black';
+            %     return;
+            % end
 
             app.enable_run_button = true;
             app.StatusLabel.Text = 'Ready to run.';
@@ -475,10 +475,12 @@ classdef RainbowSTORM < matlab.apps.AppBase
 
             [~, idx] = min(abs(loaded_speccali.wavelengths - app.CentralWavelengthSlider.Value));
 
+            img_pxsz = 110;
+
             if app.order0_crops_set && app.order1_crops_set
-                mid_x0 = (order0_roi(1) + (order0_roi(3)) / 2) * img_pxsz;
-                mid_y0 = (order0_roi(2) + (order0_roi(4)) / 2) * img_pxsz;
-                xoff = (order1_roi(1) - order0_roi(1)) * img_pxsz;
+                mid_x0 = (app.order0_crops(1) + (app.order0_crops(3)) / 2) * img_pxsz;
+                mid_y0 = (app.order0_crops(2) + (app.order0_crops(4)) / 2) * img_pxsz;
+                xoff = (app.order1_crops(1) - app.order0_crops(1)) * img_pxsz;
             else
                 mid_x0 = (min(ts_table0{:, 'x [nm]'}) + max(ts_table0{:, 'x [nm]'})) / 2;
                 mid_y0 = (min(ts_table0{:, 'y [nm]'}) + max(ts_table0{:, 'y [nm]'})) / 2;
@@ -507,7 +509,7 @@ classdef RainbowSTORM < matlab.apps.AppBase
             ts_table0 = sortrows(ts_table0, 'frame');
             ts_table1 = sortrows(ts_table1, 'frame');
 
-            app.StatusLabel.Text = 'Matching 0th and 1st order localizations (Pass 1)...';
+            app.StatusLabel.Text = 'Matching 0th and 1st order localizations...';
             drawnow;
             [matched_idx0, matched_idx1] = match_localizations(app, ts_table0, ts_table1);
 
