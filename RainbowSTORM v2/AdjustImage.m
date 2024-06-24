@@ -423,7 +423,7 @@ classdef AdjustImage < matlab.apps.AppBase
             end
 
             app.setWavelengthLimits();
-            app.setSliderValues();
+            % app.setSliderValues();
             
             app.setEditFieldValues();
             app.setSliderLabels();
