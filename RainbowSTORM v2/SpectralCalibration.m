@@ -280,7 +280,7 @@ classdef SpectralCalibration < matlab.apps.AppBase
                 app.data{ifile} = csvdata;
             else
                 % load the data from the nd2 file
-                img = bfOpen3DVolume(fullfile(app.dir_inputpath, filename));
+                img = bfOpen3DVolume(char(fullfile(app.dir_inputpath, filename)));
                 if isnumeric(img{1}{1})
                     img = img{1}{1};
                 end
@@ -357,7 +357,7 @@ classdef SpectralCalibration < matlab.apps.AppBase
                 img = app.data{ifile};
 
                 im_width = size(img, 2);
-                im_center_mask = 100;
+                im_center_mask = 200;
 
                 im0_roi_xmin = 1;
                 im0_roi_xmax = floor(im_width/2)-im_center_mask;
