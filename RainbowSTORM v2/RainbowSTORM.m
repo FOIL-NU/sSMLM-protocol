@@ -39,12 +39,13 @@ classdef RainbowSTORM < matlab.apps.AppBase
 
         SettingsPanel                   matlab.ui.container.Panel %
             SettingsGridLayout              matlab.ui.container.GridLayout %
-            nmEditFieldLabel                matlab.ui.control.Label %
-            nmEditField                     matlab.ui.control.NumericEditField %
-            ShowVisualizationCheckBox       matlab.ui.control.CheckBox %
-            PlotHistogramsCheckBox          matlab.ui.control.CheckBox %
+            CentralWavelengthFieldLabel     matlab.ui.control.Label %
+            CentralWavelengthField          matlab.ui.control.NumericEditField %
             CentralWavelengthSlider         matlab.ui.control.Slider %
             CentralWavelengthSliderLabel    matlab.ui.control.Label %
+            PixelSizeFieldLabel             matlab.ui.control.Label %
+            PixelSizeFieldUnit              matlab.ui.control.Label %
+            PixelSizeField                  matlab.ui.control.NumericEditField %
 
         StatusLabel                     matlab.ui.control.Label     %
         RunButton                       matlab.ui.control.Button    %
@@ -188,6 +189,7 @@ classdef RainbowSTORM < matlab.apps.AppBase
             end
             app.order0_crops_set = true;
             app.order0_crops = event.crops;
+            CheckInputsAndUpdate(app);
         end
 
         % Button pushed function: Order0BrowseButton
@@ -226,6 +228,7 @@ classdef RainbowSTORM < matlab.apps.AppBase
             end
             app.order1_crops_set = true;
             app.order1_crops = event.crops;
+            CheckInputsAndUpdate(app);
         end
 
         % Button pushed function: Order1BrowseButton
@@ -281,9 +284,15 @@ classdef RainbowSTORM < matlab.apps.AppBase
         
         %% Callbacks for elements in the DirectoriesPanel
         % If the central wavelength slider is changing
-        function CentralWavelengthSliderValueChanging(app, ~)
+        function CentralWavelengthSliderValueChanging(app, event)
+            changingValue = event.Value;
+            app.CentralWavelengthField.Value = changingValue;
+            app.processing_central_wavelength = changingValue;
+        end
+
+        function CentralWavelengthSliderValueChanged(app, ~)
             app.processing_central_wavelength = app.CentralWavelengthSlider.Value;
-            app.nmEditField.Value = app.processing_central_wavelength;
+            app.CentralWavelengthField.Value = app.processing_central_wavelength;
         end
 
         function CheckInputsAndUpdate(app, ~)
@@ -314,7 +323,7 @@ classdef RainbowSTORM < matlab.apps.AppBase
             end
 
             if isempty(app.dir_speccali)
-                app.StatusLabel.Text = 'Please select calibration file(s).';
+                app.StatusLabel.Text = 'Please select a spectral calibration file.';
                 app.StatusLabel.FontColor = 'black';
                 return;
             end
@@ -329,6 +338,8 @@ classdef RainbowSTORM < matlab.apps.AppBase
 
             if app.ThreeDProcessingButton.Value
                 if isempty(app.dir_axialcali)
+                    app.StatusLabel.Text = 'Please select an axial calibration file.';
+                    app.StatusLabel.FontColor = 'black';
                     return;
                 end
                 file_contents = whos('-file', app.dir_axialcali);
@@ -347,13 +358,21 @@ classdef RainbowSTORM < matlab.apps.AppBase
                 return;
             end
 
-            % if app.order0_crops_set && app.order1_crops_set
-            %     app.enable_settings_panel = true;
-            % elseif ~(~app.order0_crops_set && ~app.order1_crops_set)
-            %     app.StatusLabel.Text = 'Please set the cropping regions for both orders.';
-            %     app.StatusLabel.FontColor = 'black';
-            %     return;
-            % end
+            if app.order0_crops_set && app.order1_crops_set
+                app.enable_settings_panel = true;
+            elseif ~app.order0_crops_set && ~app.order1_crops_set
+                app.StatusLabel.Text = 'Please set the cropping regions for both orders.';
+                app.StatusLabel.FontColor = 'black';
+                return;
+            elseif ~app.order0_crops_set
+                app.StatusLabel.Text = 'Please set the cropping region for the 0th order.';
+                app.StatusLabel.FontColor = 'black';
+                return;
+            elseif ~app.order1_crops_set
+                app.StatusLabel.Text = 'Please set the cropping region for the 1st order.';
+                app.StatusLabel.FontColor = 'black';
+                return;
+            end
 
             app.enable_run_button = true;
             app.StatusLabel.Text = 'Ready to run.';
@@ -377,12 +396,13 @@ classdef RainbowSTORM < matlab.apps.AppBase
             else
                 update_value = 'off';
             end
-            app.nmEditField.Enable = update_value;
-            app.nmEditFieldLabel.Enable = update_value;
+            app.PixelSizeField.Enable = update_value;
+            app.PixelSizeFieldUnit.Enable = update_value;
+            app.PixelSizeFieldLabel.Enable = update_value;
+            app.CentralWavelengthField.Enable = update_value;
+            app.CentralWavelengthFieldLabel.Enable = update_value;
             app.CentralWavelengthSlider.Enable = update_value;
             app.CentralWavelengthSliderLabel.Enable = update_value;
-            app.PlotHistogramsCheckBox.Enable = update_value;
-            app.ShowVisualizationCheckBox.Enable = update_value;
 
             if app.enable_output_panel && app.enable_run_button
                 update_value = 'on';
@@ -393,14 +413,14 @@ classdef RainbowSTORM < matlab.apps.AppBase
         end
 
         % If the edit field is changed
-        function nmEditFieldValueChanged(app, ~)
+        function CentralWavelengthFieldValueChanged(app, ~)
             % Check if the value is within the limits
-            if app.nmEditField.Value < 500
-                app.nmEditField.Value = 500;
-            elseif app.nmEditField.Value > 800
-                app.nmEditField.Value = 800;
+            if app.CentralWavelengthField.Value < 500
+                app.CentralWavelengthField.Value = 500;
+            elseif app.CentralWavelengthField.Value > 800
+                app.CentralWavelengthField.Value = 800;
             end
-            app.processing_central_wavelength = app.nmEditField.Value;
+            app.processing_central_wavelength = app.CentralWavelengthField.Value;
             app.CentralWavelengthSlider.Value = app.processing_central_wavelength;
         end
 
@@ -411,21 +431,24 @@ classdef RainbowSTORM < matlab.apps.AppBase
                 app.OutputFolderTextArea.Enable = 'off';
                 app.OutputFolderTextAreaLabel.Enable = 'off';
                 app.OutputBrowseButton.Enable = 'off';
-                app.nmEditField.Enable = 'off';
-                app.nmEditFieldLabel.Enable = 'off';
+                app.CentralWavelengthField.Enable = 'off';
+                app.CentralWavelengthFieldLabel.Enable = 'off';
                 app.CentralWavelengthSlider.Enable = 'off';
                 app.CentralWavelengthSliderLabel.Enable = 'off';
-                app.PlotHistogramsCheckBox.Enable = 'off';
-                app.ShowVisualizationCheckBox.Enable = 'off';
+                app.PixelSizeField.Enable = 'off';
+                app.PixelSizeFieldLabel.Enable = 'off';
+                app.PixelSizeFieldUnit.Enable = 'off';
                 app.ThreeDProcessingButton.Enable = 'off';
                 app.BatchModeButton.Enable = 'off';
                 app.SpecCaliButton.Enable = 'off';
                 app.AxialCaliButton.Enable = 'off';
                 app.Order0CroppingRegionButton.Enable = 'off';
                 app.Order0InputTextArea.Enable = 'off';
+                app.Order0InputTextAreaLabel.Enable = 'off';
                 app.Order0BrowseButton.Enable = 'off';
                 app.Order1CroppingRegionButton.Enable = 'off';
                 app.Order1InputTextArea.Enable = 'off';
+                app.Order1InputTextAreaLabel.Enable = 'off';
                 app.Order1BrowseButton.Enable = 'off';
                 app.SpecCaliFileTextArea.Enable = 'off';
                 app.SpecCaliFileTextAreaLabel.Enable = 'off';
@@ -475,7 +498,7 @@ classdef RainbowSTORM < matlab.apps.AppBase
 
             [~, idx] = min(abs(loaded_speccali.wavelengths - app.CentralWavelengthSlider.Value));
 
-            img_pxsz = 110;
+            img_pxsz = app.PixelSizeField.Value;
 
             if app.order0_crops_set && app.order1_crops_set
                 mid_x0 = (app.order0_crops(1) + (app.order0_crops(3)) / 2) * img_pxsz;
@@ -770,7 +793,7 @@ classdef RainbowSTORM < matlab.apps.AppBase
             % Create UIFigure and hide until all components are created
             app.UIFigure = uifigure('Visible', 'off');
             app.UIFigure.Position = [100 100 600 500];
-            app.UIFigure.Name = 'RainbowSTORM v1.5';
+            app.UIFigure.Name = 'RainbowSTORM v2.0';
 
             % Create MainGridLayout
             app.MainGridLayout = uigridlayout(app.UIFigure);
@@ -972,42 +995,50 @@ classdef RainbowSTORM < matlab.apps.AppBase
 
             % Create SettingsGridLayout
             app.SettingsGridLayout = uigridlayout(app.SettingsPanel);
-            app.SettingsGridLayout.ColumnWidth = {60, 60, '1x', 10, 140};
+            app.SettingsGridLayout.ColumnWidth = {5, 40, 40, 30, 40, 40, '1x'};
             app.SettingsGridLayout.ColumnSpacing = 2;
             app.SettingsGridLayout.RowSpacing = 2;
             app.SettingsGridLayout.Padding = [5 3 5 3];
-
-            % Create nmEditFieldLabel
-            app.nmEditFieldLabel = uilabel(app.SettingsGridLayout);
-            app.nmEditFieldLabel.Enable = 'off';
-            app.nmEditFieldLabel.Layout.Row = 2;
-            app.nmEditFieldLabel.Layout.Column = 2;
-            app.nmEditFieldLabel.Text = 'nm';
             
-            % Create nmEditField
-            app.nmEditField = uieditfield(app.SettingsGridLayout, 'numeric');
-            app.nmEditField.Limits = [500 800];
-            app.nmEditField.Layout.Row = 2;
-            app.nmEditField.Layout.Column = 1;
-            app.nmEditField.Value = 700;
-            app.nmEditField.Enable = 'off';
-            app.nmEditField.ValueChangedFcn = createCallbackFcn(app, @nmEditFieldValueChanged, true);
+            % Create CentralWavelengthField
+            app.CentralWavelengthField = uieditfield(app.SettingsGridLayout, 'numeric');
+            app.CentralWavelengthField.Limits = [500 800];
+            app.CentralWavelengthField.Layout.Row = 2;
+            app.CentralWavelengthField.Layout.Column = 5;
+            app.CentralWavelengthField.Value = 700;
+            app.CentralWavelengthField.Enable = 'off';
+            app.CentralWavelengthField.ValueChangedFcn = createCallbackFcn(app, @CentralWavelengthFieldValueChanged, true);
 
-            % Create ShowVisualizationCheckBox
-            app.ShowVisualizationCheckBox = uicheckbox(app.SettingsGridLayout);
-            app.ShowVisualizationCheckBox.Text = 'Show Visualization';
-            app.ShowVisualizationCheckBox.Layout.Row = 2;
-            app.ShowVisualizationCheckBox.Layout.Column = 5;
-            app.ShowVisualizationCheckBox.Value = true;
-            app.ShowVisualizationCheckBox.Enable = 'off';
+            % Create CentralWavelengthFieldLabel
+            app.CentralWavelengthFieldLabel = uilabel(app.SettingsGridLayout);
+            app.CentralWavelengthFieldLabel.Enable = 'off';
+            app.CentralWavelengthFieldLabel.Layout.Row = 2;
+            app.CentralWavelengthFieldLabel.Layout.Column = 6;
+            app.CentralWavelengthFieldLabel.Text = 'nm';
 
-            % Create PlotHistogramsCheckBox
-            app.PlotHistogramsCheckBox = uicheckbox(app.SettingsGridLayout);
-            app.PlotHistogramsCheckBox.Text = 'Plot Histograms';
-            app.PlotHistogramsCheckBox.Layout.Row = 1;
-            app.PlotHistogramsCheckBox.Layout.Column = 5;
-            app.PlotHistogramsCheckBox.Value = true;
-            app.PlotHistogramsCheckBox.Enable = 'off';
+            % Create PixelSizeFieldLabel
+            app.PixelSizeFieldLabel = uilabel(app.SettingsGridLayout);
+            app.PixelSizeFieldLabel.HorizontalAlignment = 'center';
+            app.PixelSizeFieldLabel.Layout.Row = 1;
+            app.PixelSizeFieldLabel.Layout.Column = [1 3];
+            app.PixelSizeFieldLabel.Text = 'Pixel Size';
+            app.PixelSizeFieldLabel.Enable = 'off';
+
+            % Create PixelSizeField
+            app.PixelSizeField = uieditfield(app.SettingsGridLayout, 'numeric');
+            app.PixelSizeField.Limits = [50 200];
+            app.PixelSizeField.Layout.Row = 2;
+            app.PixelSizeField.Layout.Column = 2;
+            app.PixelSizeField.Value = 110;
+            app.PixelSizeField.Enable = 'off';
+            app.PixelSizeField.ValueChangedFcn = createCallbackFcn(app, @PixelSizeFieldValueChanged, true);
+
+            % Create PixelSizeFieldUnit
+            app.PixelSizeFieldUnit = uilabel(app.SettingsGridLayout);
+            app.PixelSizeFieldUnit.Enable = 'off';
+            app.PixelSizeFieldUnit.Layout.Row = 2;
+            app.PixelSizeFieldUnit.Layout.Column = 3;
+            app.PixelSizeFieldUnit.Text = 'nm';
 
             % Create CentralWavelengthSlider
             app.CentralWavelengthSlider = uislider(app.SettingsGridLayout);
@@ -1015,19 +1046,19 @@ classdef RainbowSTORM < matlab.apps.AppBase
             app.CentralWavelengthSlider.MajorTicks = 500:100:800;
             app.CentralWavelengthSlider.MinorTicks = 500:10:800;
             app.CentralWavelengthSlider.Layout.Row = 1;
-            app.CentralWavelengthSlider.Layout.Column = 3;
+            app.CentralWavelengthSlider.Layout.Column = 7;
             app.CentralWavelengthSlider.Value = 700;
             app.CentralWavelengthSlider.Enable = 'off';
             app.CentralWavelengthSlider.ValueChangingFcn = createCallbackFcn(app, @CentralWavelengthSliderValueChanging, true);
+            app.CentralWavelengthSlider.ValueChangedFcn = createCallbackFcn(app, @CentralWavelengthSliderValueChanged, true);
 
             % Create CentralWavelengthSliderLabel
             app.CentralWavelengthSliderLabel = uilabel(app.SettingsGridLayout);
             app.CentralWavelengthSliderLabel.HorizontalAlignment = 'center';
             app.CentralWavelengthSliderLabel.Layout.Row = 1;
-            app.CentralWavelengthSliderLabel.Layout.Column = [1 2];
+            app.CentralWavelengthSliderLabel.Layout.Column = [4 6];
             app.CentralWavelengthSliderLabel.Text = 'Central Wavelength';
             app.CentralWavelengthSliderLabel.Enable = 'off';
-
             
             % Create StatusLabel
             app.StatusLabel = uilabel(app.MainGridLayout);
