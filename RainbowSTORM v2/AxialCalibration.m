@@ -73,6 +73,9 @@ classdef AxialCalibration < matlab.apps.AppBase
         global_z_min
         global_z_max
         global_z_num
+
+        min_idx
+        max_idx
     end
     
     % Callbacks that handle component events
@@ -309,8 +312,8 @@ classdef AxialCalibration < matlab.apps.AppBase
                 return
             end
 
-            zcali.sigma0_fitted = app.simulated0;
-            zcali.sigma1_fitted = app.simulated1;
+            zcali.sigma0_fitted = app.simulated0(app.min_idx:app.max_idx);
+            zcali.sigma1_fitted = app.simulated1(app.min_idx:app.max_idx);
             zcali.z_values = app.z_simulated;
 
             save(app.dir_matfile,'zcali');
@@ -570,8 +573,10 @@ classdef AxialCalibration < matlab.apps.AppBase
 
             max_ratio = find(islocalmax(ratio_));
             min_ratio = find(islocalmin(ratio_));
-            ratio_ = ratio_(max_ratio:min_ratio);
-            z_simulated_ = app.z_simulated(max_ratio:min_ratio);
+            app.min_idx = min(min_ratio,max_ratio);
+            app.max_idx = max(min_ratio,max_ratio);
+            ratio_ = ratio_(app.min_idx:app.max_idx);
+            z_simulated_ = app.z_simulated(app.min_idx:app.max_idx);
 
             plot(app.UIAxesCaliCurve,z_simulated_,ratio_,'k');
             app.ratio = ratio_;
