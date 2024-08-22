@@ -406,11 +406,19 @@ classdef AxialCalibration < matlab.apps.AppBase
         function PreviewImage(app, ~)
             img0 = app.image0_mean;
             img1 = app.image1_mean;
+            Nf = size(app.image0,3);
 
-            pks0 = fastPeakFind(img0, 50);
-            pks0 = [pks0(1:2:end), pks0(2:2:end)];
-            pks1 = fastPeakFind(img1, 50);
-            pks1 = [pks1(1:2:end), pks1(2:2:end)];
+            p3 = round(Nf/2);
+            [py0,px0] = find(app.image0(:,:,p3)==max(max(app.image0(:,:,p3))),1);
+            [py1,px1] = find(app.image1(:,:,p3)==max(max(app.image1(:,:,p3))),1);
+
+            pks0 = [px0,py0];
+            pks1 = [px1,py1];
+
+%             pks0 = fastPeakFind(img0, 200);
+%             pks0 = [pks0(1:2:end), pks0(2:2:end)];
+%             pks1 = fastPeakFind(img1, 50);
+%             pks1 = [pks1(1:2:end), pks1(2:2:end)];
 
             cla(app.UIAxesImageOrder0);
             imagesc(app.UIAxesImageOrder0, img0);
