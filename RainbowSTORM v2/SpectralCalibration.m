@@ -13,7 +13,7 @@ classdef SpectralCalibration < matlab.apps.AppBase
             UIAxesXShifts               matlab.ui.control.UIAxes
     end
 
-    properties (Access = public)
+    properties (Access = private)
         LOCALIZATION_MATCHING = 0;
         IMAGE_MATCHING = 1;
 
@@ -37,6 +37,8 @@ classdef SpectralCalibration < matlab.apps.AppBase
         yscale
         xshift
         yshift
+        x0centroid
+        y0centroid
         wls
     end
 
@@ -309,6 +311,9 @@ classdef SpectralCalibration < matlab.apps.AppBase
             app.locs0 = zeros(nfiles,floor(nlocs/2),2);
             app.locs1 = zeros(nfiles,floor(nlocs/2),2);
 
+            x0centroids = zeros(nfiles, 1);
+            y0centroids = zeros(nfiles, 1);
+
             for ifile = 1:nfiles
                 csvdata = app.data{ifile};
                 % check that the number of localization is the same as the reference file
@@ -330,6 +335,9 @@ classdef SpectralCalibration < matlab.apps.AppBase
                 y0 = mean(order0{:, 'y [nm]'});
                 x1 = mean(order1{:, 'x [nm]'});
                 y1 = mean(order1{:, 'y [nm]'});
+
+                x0centroids(ifile) = x0;
+                y0centroids(ifile) = y0;
             
                 % correct the shift to find the magnification factors
                 app.xshift(ifile) = x1 - x0;
@@ -338,6 +346,9 @@ classdef SpectralCalibration < matlab.apps.AppBase
                 app.locs0(ifile,:,:) = order0{:, {'x [nm]', 'y [nm]'}};
                 app.locs1(ifile,:,:) = order1{:, {'x [nm]', 'y [nm]'}};
             end
+
+            app.x0centroid = mean(x0centroids);
+            app.y0centroid = mean(y0centroids);
 
             compute_calibration_curve(app);
             compute_scaling(app);
@@ -417,6 +428,8 @@ classdef SpectralCalibration < matlab.apps.AppBase
             speccali.yshift = app.yshift;
             speccali.xshift_mean = mean(app.xshift);
             speccali.yshift_mean = mean(app.yshift);
+            speccali.x0centroid = app.x0centroid;
+            speccali.y0centroid = app.y0centroid;
             speccali.fx = app.fx;
             speccali.fy = app.fy;
             speccali.wavelengths = app.wls;
