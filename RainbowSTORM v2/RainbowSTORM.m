@@ -74,6 +74,8 @@ properties (Access = private)
     enable_output_panel = false;
     enable_run_button = false;
 
+    debug = false;
+
     table_output
 end
 
@@ -500,39 +502,41 @@ methods (Access = private)
         [~, idx] = min(abs(loaded_speccali.wavelengths - app.CentralWavelengthSlider.Value));
 
         % perform scaling corrections on the x and y directions based on the spectral calibration file
+        % (disabled for now as it seems to do more harm than good)
         img_pxsz = app.PixelSizeField.Value;
 
         if app.order0_crops_set && app.order1_crops_set
-            mid_x0 = (app.order0_crops(1) + (app.order0_crops(3)) / 2) * img_pxsz;
-            mid_y0 = (app.order0_crops(2) + (app.order0_crops(4)) / 2) * img_pxsz;
+            % mid_x0 = (app.order0_crops(1) + (app.order0_crops(3)) / 2) * img_pxsz;
+            % mid_y0 = (app.order0_crops(2) + (app.order0_crops(4)) / 2) * img_pxsz;
             xoff = (app.order1_crops(1) - app.order0_crops(1)) * img_pxsz;
             yoff = (app.order1_crops(2) - app.order0_crops(2)) * img_pxsz;
         else
-            mid_x0 = (min(ts_table0{:, 'x [nm]'}) + max(ts_table0{:, 'x [nm]'})) / 2;
-            mid_y0 = (min(ts_table0{:, 'y [nm]'}) + max(ts_table0{:, 'y [nm]'})) / 2;
+            % mid_x0 = (min(ts_table0{:, 'x [nm]'}) + max(ts_table0{:, 'x [nm]'})) / 2;
+            % mid_y0 = (min(ts_table0{:, 'y [nm]'}) + max(ts_table0{:, 'y [nm]'})) / 2;
             xoff = 0;
             yoff = 0;
         end
 
-        ts_table0{:, 'x [nm]'} = (ts_table0{:, 'x [nm]'} - mid_x0) .* loaded_speccali.xscale(idx) + mid_x0;
-        ts_table0{:, 'y [nm]'} = (ts_table0{:, 'y [nm]'} - mid_y0) .* loaded_speccali.yscale(idx) + mid_y0;
+        % ts_table0{:, 'x [nm]'} = (ts_table0{:, 'x [nm]'} - mid_x0) .* loaded_speccali.xscale(idx) + mid_x0;
+        % ts_table0{:, 'y [nm]'} = (ts_table0{:, 'y [nm]'} - mid_y0) .* loaded_speccali.yscale(idx) + mid_y0;
 
         % shift the two images based on the target central wavelength value
         ycomp = yoff - loaded_speccali.yshift(idx);
         xcomp = xoff - dwp_wl2px(app.CentralWavelengthSlider.Value, loaded_speccali.fx);
-        disp(['xcomp: ', num2str(xcomp), ' ycomp: ', num2str(ycomp)]);
-        disp(['xoff: ', num2str(xoff), ' yoff: ', num2str(yoff)]);
-        disp(['xcalc: ', num2str(dwp_wl2px(app.CentralWavelengthSlider.Value, loaded_speccali.fx))]);
+
+        if app.debug == true
+            disp(['xcomp: ', num2str(xcomp), ' ycomp: ', num2str(ycomp)]);
+            disp(['xoff: ', num2str(xoff), ' yoff: ', num2str(yoff)]);
+            disp(['xcalc: ', num2str(dwp_wl2px(app.CentralWavelengthSlider.Value, loaded_speccali.fx))]);
+        end
 
         if app.processing_cancelled
             app.StatusLabel.Text = 'Processing cancelled.';
             return;
         end
-
-        debug = true;
-        plot_range = 1:5000;
         
-        if debug == true
+        if app.debug == true
+            plot_range = 1:5000;
             figure(1); clf;
             subplot(1,2,1);
             scatter(ts_table0{plot_range, 'x [nm]'}, ts_table0{plot_range, 'y [nm]'}, 1, 'r', 'filled');
@@ -545,7 +549,7 @@ methods (Access = private)
         ts_table1{:, 'y [nm]'} = ts_table1{:, 'y [nm]'} + ycomp;
 
         % visualize the correction localization with a plot
-        if debug == true
+        if app.debug == true
             subplot(1,2,2);
             scatter(ts_table0{plot_range, 'x [nm]'}, ts_table0{plot_range, 'y [nm]'}, 1, 'r', 'filled');
             hold on;
@@ -768,13 +772,15 @@ methods (Access = private)
         % perform a low pass filter on the cross correlation image
         corr_im = imgaussfilt(corr_im, 5);
 
-        % figure(2);
-        % subplot(1,3,1);
-        % imshow(im0,[]);
-        % subplot(1,3,2);
-        % imshow(im1,[]);
-        % subplot(1,3,3);
-        % imshow(corr_im,[]);
+        if app.debug == true
+            figure(2);
+            subplot(1,3,1);
+            imshow(im0,[]);
+            subplot(1,3,2);
+            imshow(im1,[]);
+            subplot(1,3,3);
+            imshow(corr_im,[]);
+        end
         
         [ypeak, xpeak] = find(corr_im == max(corr_im(:)));
         xcomp = -(xpeak-size(im0,2))*sample_px;
@@ -1099,13 +1105,19 @@ end
 methods (Access = public)
 
     % Construct app
-    function app = RainbowSTORM
+    function app = RainbowSTORM(debug)
+        if nargin == 0
+            debug = false;
+        end
 
         % Create UIFigure and components
         createComponents(app)
 
         % Register the app with App Designer
         registerApp(app, app.UIFigure)
+
+        % pass the debug variable to the app
+        app.debug = debug;
         
         addpath('lib');
         addpath('lib/dwp_scripts');
