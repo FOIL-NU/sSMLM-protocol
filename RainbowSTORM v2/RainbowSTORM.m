@@ -22,6 +22,7 @@ properties (Access = public)
 
         Order1CroppingRegionButton      matlab.ui.control.Button %
         Order1InputTextArea             matlab.ui.control.TextArea %
+
         Order1InputTextAreaLabel        matlab.ui.control.Label %
         Order1BrowseButton              matlab.ui.control.Button %
 
@@ -498,36 +499,58 @@ methods (Access = private)
 
         [~, idx] = min(abs(loaded_speccali.wavelengths - app.CentralWavelengthSlider.Value));
 
+        % perform scaling corrections on the x and y directions based on the spectral calibration file
         img_pxsz = app.PixelSizeField.Value;
 
         if app.order0_crops_set && app.order1_crops_set
             mid_x0 = (app.order0_crops(1) + (app.order0_crops(3)) / 2) * img_pxsz;
             mid_y0 = (app.order0_crops(2) + (app.order0_crops(4)) / 2) * img_pxsz;
             xoff = (app.order1_crops(1) - app.order0_crops(1)) * img_pxsz;
+            yoff = (app.order1_crops(2) - app.order0_crops(2)) * img_pxsz;
         else
             mid_x0 = (min(ts_table0{:, 'x [nm]'}) + max(ts_table0{:, 'x [nm]'})) / 2;
             mid_y0 = (min(ts_table0{:, 'y [nm]'}) + max(ts_table0{:, 'y [nm]'})) / 2;
             xoff = 0;
+            yoff = 0;
         end
 
         ts_table0{:, 'x [nm]'} = (ts_table0{:, 'x [nm]'} - mid_x0) .* loaded_speccali.xscale(idx) + mid_x0;
         ts_table0{:, 'y [nm]'} = (ts_table0{:, 'y [nm]'} - mid_y0) .* loaded_speccali.yscale(idx) + mid_y0;
 
-        % correct the x and y values of the 1st order (to be deprecated)
-        % app.StatusLabel.Text = 'Matching 0th and 1st order...';
-        % drawnow;
-        % 
-        % [xcomp, ycomp] = corr_xy(app, ts_table0, ts_table1);
-        xcomp = 0; ycomp = 0;
+        % shift the two images based on the target central wavelength value
+        ycomp = yoff - loaded_speccali.yshift(idx);
+        xcomp = xoff - dwp_wl2px(app.CentralWavelengthSlider.Value, loaded_speccali.fx);
+        disp(['xcomp: ', num2str(xcomp), ' ycomp: ', num2str(ycomp)]);
+        disp(['xoff: ', num2str(xoff), ' yoff: ', num2str(yoff)]);
+        disp(['xcalc: ', num2str(dwp_wl2px(app.CentralWavelengthSlider.Value, loaded_speccali.fx))]);
 
         if app.processing_cancelled
             app.StatusLabel.Text = 'Processing cancelled.';
             return;
         end
 
+        debug = true;
+        plot_range = 1:5000;
+        
+        if debug == true
+            figure(1); clf;
+            subplot(1,2,1);
+            scatter(ts_table0{plot_range, 'x [nm]'}, ts_table0{plot_range, 'y [nm]'}, 1, 'r', 'filled');
+            hold on;
+            scatter(ts_table1{plot_range, 'x [nm]'}, ts_table1{plot_range, 'y [nm]'}, 1, 'b', 'filled');
+        end
+
         % correct the x1 and y1 values with tform_mean and fx at the central wavelength, yshift_mean
-        % ts_table1{:, 'x [nm]'} = ts_table1{:, 'x [nm]'} + xcomp;
-        % ts_table1{:, 'y [nm]'} = ts_table1{:, 'y [nm]'} + ycomp;
+        ts_table1{:, 'x [nm]'} = ts_table1{:, 'x [nm]'} + xcomp;
+        ts_table1{:, 'y [nm]'} = ts_table1{:, 'y [nm]'} + ycomp;
+
+        % visualize the correction localization with a plot
+        if debug == true
+            subplot(1,2,2);
+            scatter(ts_table0{plot_range, 'x [nm]'}, ts_table0{plot_range, 'y [nm]'}, 1, 'r', 'filled');
+            hold on;
+            scatter(ts_table1{plot_range, 'x [nm]'}, ts_table1{plot_range, 'y [nm]'}, 1, 'b', 'filled');
+        end
 
         % sort the tables by frame
         ts_table0 = sortrows(ts_table0, 'frame');
