@@ -1,0 +1,3 @@
+coordinates are in x,y,w,h, bounding box.
+zeroth: 0, 0, 500, 450
+first: 950, 0, 500, 450
