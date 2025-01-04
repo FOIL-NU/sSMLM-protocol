@@ -142,11 +142,12 @@ methods (Access = private)
     % Button pushed function: AxialCaliButton
     function AxialCaliButtonPushed(app, ~)
         % on button press, run the axial calibration gui
-        if isMATLABReleaseOlderThan('R2023b')
-            axialcali_gui = AxialCalibrationLegacy();
-        else
-            axialcali_gui = AxialCalibration();
-        end
+%         if isMATLABReleaseOlderThan('R2023b')
+%             axialcali_gui = AxialCalibrationLegacy();
+%         else
+%             axialcali_gui = AxialCalibration();
+%         end
+        axialcali_gui = AxialCalibration();
 
         % set the window style to modal so that the user
         % cannot interact with the main gui while the calibration
