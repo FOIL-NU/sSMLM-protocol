@@ -13,6 +13,9 @@ The accompanying software, `RainbowSTORM v2` requires at least MATLAB R2020b to 
 
 The recommended MATLAB version is R2023b for the best compatibility with the software.
 
+# Sample data
+Sample data is provided in a separate repository, [sSMLM-protocol-sample](https://github.com/FOIL-NU/sSMLM-protocol-sample). Download the sample data and extract it to the same directory as the software if you would like to test the software with the sample data.
+
 # License
 Distributed under the GNU General Public License v3.0. See `LICENSE` for more information.
 
