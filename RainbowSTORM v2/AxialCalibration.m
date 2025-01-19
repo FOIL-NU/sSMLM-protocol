@@ -56,6 +56,7 @@ classdef AxialCalibration < matlab.apps.AppBase
 
         localizations
         localization_selected = 1
+        dir_path
         dir_inputpath
         dir_matfile
         dir_csvfile
@@ -103,6 +104,7 @@ classdef AxialCalibration < matlab.apps.AppBase
             end
 
             figure(app.UIFigure);
+            app.dir_input = fullfile(path);
             app.dir_inputpath = fullfile(path,file);
             app.LoadImage(app);
             app.PreviewImage(app);
@@ -290,7 +292,7 @@ classdef AxialCalibration < matlab.apps.AppBase
         function ExportButtonPushed(app, ~)
             % let the user pick where to put the file
             [file,path] = uiputfile({'*.csv','Comma-separated files (*.csv)'}, ...
-                'Save the calibration file as', 'axialcali.csv');
+                'Save the calibration file as', fullfile(app.dir_path,'axialcali.csv'));
             app.dir_csvfile = fullfile(path,file);
             
             if path == 0
@@ -305,7 +307,7 @@ classdef AxialCalibration < matlab.apps.AppBase
         function SaveButtonPushed(app, ~)
             % let the user pick where to put the file
             [file,path] = uiputfile({'*.mat', 'MAT-files (*.mat)'}, ...
-                'Save the calibration file as','axialcali.mat');
+                'Save the calibration file as', fullfile(app.dir_path,'axialcali.mat'));
             app.dir_matfile = fullfile(path,file);
             
             if path == 0
