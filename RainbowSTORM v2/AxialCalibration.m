@@ -83,7 +83,7 @@ classdef AxialCalibration < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, ~)
             % Check MATLAB version
-            if isMATLABReleaseOlderThan('R2023a')
+            if isMATLABReleaseOlderThan('R2023b')
                 app.MATLAB_VERSION_OLDER_THAN_2023B = true;
             end
 
